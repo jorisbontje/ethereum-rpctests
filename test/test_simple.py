@@ -18,7 +18,7 @@ def run_eth_process(client, tmpdir):
                 '-d', tmpdir]
     elif client == 'go-ethereum':
         # import secret key
-        subprocess.call(['ethereum', '-datadir=' + tmpdir, '-import=test/fixtures/cow_secret.txt', '-y'])
+        subprocess.check_output(['ethereum', '-datadir=' + tmpdir, '-import=test/fixtures/cow_secret.txt', '-y'])
 
         args = ['ethereum',
                 '-mine=true',
