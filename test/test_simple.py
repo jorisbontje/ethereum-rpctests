@@ -8,18 +8,20 @@ from pyepm import api, config
 
 COW_SECRET = "0xc85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4"
 
-def eth_args(client, tmpdir):
+def run_eth_process(client, tmpdir):
+    args = []
     if client == 'cpp-ethereum':
-        return [
-                'eth',
+        args = ['eth',
                 '-j',
                 '-s', COW_SECRET,
-                '-m', 'off',
+                '-m', 'on',
                 '-d', tmpdir]
     elif client == 'go-ethereum':
-        return [
-                'ethereum',
-                '-mine=false',
+        # import secret key
+        subprocess.call(['ethereum', '-datadir=' + tmpdir, '-import=test/fixtures/cow_secret.txt', '-y'])
+
+        args = ['ethereum',
+                '-mine=true',
                 '-rpc=true',
                 '-rpcport=8080',
                 '-loglevel=5',
@@ -30,14 +32,16 @@ def eth_args(client, tmpdir):
     else:
         raise ValueError("unknown client: %s" % client)
 
+    return subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
 @pytest.fixture(scope="module", params=['cpp-ethereum', 'go-ethereum'])
+@pytest.mark.timeout(1)
 def eth(request):
     tmpdir = py.path.local(tempfile.mkdtemp())
 
-    args = eth_args(request.param, str(tmpdir))
-    process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = run_eth_process(request.param, str(tmpdir))
 
-    time.sleep(2)  # Waiting for node startup
+    time.sleep(2)
 
     assert process.poll() is None, "process terminated"
 
@@ -58,7 +62,7 @@ class TestBasicRPC(object):
         cls.instance = api.Api(config.get_default_config())
 
     def test_status(self, eth):
-        assert not self.instance.is_mining()
+        assert self.instance.is_mining()
         assert self.instance.is_listening()
         assert self.instance.defaultBlock() == -1
         assert self.instance.peer_count() == 0
@@ -94,4 +98,3 @@ class TestBasicRPC(object):
 
         assert_address(address)
         self.instance.wait_for_contract(address)
-
