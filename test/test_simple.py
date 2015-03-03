@@ -47,7 +47,7 @@ def eth(request):
 
     def fin():
         process.terminate()
-        tmpdir.remove(rec=1)
+        tmpdir.remove(rec=1, ignore_errors=True)
     request.addfinalizer(fin)
     return process
 
