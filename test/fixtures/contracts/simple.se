@@ -4,9 +4,11 @@ data counter
 def init():
     self.owner = msg.sender
     self.counter = 1
+    log(msg.sender, data=[self])
 
 def incr():
     self.counter += 1
+    log(data=[self.counter])
 
 def get_counter():
     return(self.counter)

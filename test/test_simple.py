@@ -1,4 +1,5 @@
 import pytest
+import serpent
 import subprocess
 import tempfile
 import time
@@ -7,6 +8,7 @@ import py
 from pyepm import api, config
 
 COW_SECRET = "0xc85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4"
+COW_ADDRESS = "0xcd2a3d9f938e13cd947ec05abc7fe734df8dd826"
 
 def run_eth_process(client, tmpdir):
     args = []
@@ -75,6 +77,7 @@ class TestBasicRPC(object):
         accounts = self.instance.accounts()
         assert len(accounts) > 0
         for account in accounts:
+            print account
             assert_address(account)
 
     def test_block_genesis(self, eth):
@@ -90,11 +93,21 @@ class TestBasicRPC(object):
         assert int(genesis['miner'], 16) == 0
         assert int(genesis['parentHash'], 16) == 0
 
-    @pytest.mark.timeout(15)
-    def test_create_contract(self, eth):
-        # contracts/simple.se
-        CODE = "0x336000556001600155604f8060146000396063567c01000000000000000000000000000000000000000000000000000000006000350463119fbbd48114156036576001600154016001555b63ea66cf6d811415604d5760015460405260206040f35b505b6000f3"
-        address = self.instance.create(code=CODE)
+    @pytest.mark.timeout(20)
+    def test_create_contract_and_get_address_via_logs(self, eth):
+        contract = serpent.compile(open('test/fixtures/contracts/simple.se').read()).encode('hex')
+        assert contract
+        address = self.instance.create(code=contract)
 
         assert_address(address)
         self.instance.wait_for_contract(address)
+
+        logs = self.instance.logs({'address': address})
+        assert len(logs) == 1
+
+        log_entry = logs[0]
+        assert log_entry['address'] == address
+        assert log_entry['data'] == '0x000000000000000000000000' + address[2:]
+        assert 'hash' in log_entry
+        assert log_entry['number'] == 1
+        assert log_entry['topic'] == ['0x000000000000000000000000' + COW_ADDRESS[2:]]
