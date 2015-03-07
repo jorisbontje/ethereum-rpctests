@@ -1,9 +1,12 @@
-import pytest
-import serpent
+import os
+import py
+import signal
 import subprocess
 import tempfile
 import time
-import py
+
+import pytest
+import serpent
 
 from pyepm import api, config
 
@@ -36,7 +39,8 @@ def run_eth_process(client, tmpdir):
     else:
         raise ValueError("unknown client: %s" % client)
 
-    return subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # attach a session id to the parent process of the spawned/child processes
+    return subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=os.setsid)
 
 @pytest.fixture(scope="module", params=['cpp-ethereum', 'go-ethereum', 'node-ethereum'])
 @pytest.mark.timeout(1)
@@ -50,7 +54,7 @@ def eth(request):
     assert process.poll() is None, "process terminated"
 
     def fin():
-        process.terminate()
+        os.killpg(process.pid, signal.SIGTERM)
         tmpdir.remove(rec=1, ignore_errors=True)
     request.addfinalizer(fin)
     return process
