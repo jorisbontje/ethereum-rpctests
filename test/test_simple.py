@@ -31,12 +31,14 @@ def run_eth_process(client, tmpdir):
                 '-nat=none',
                 '-dial=false',
                 '-datadir=' + tmpdir]
+    elif client == 'node-ethereum':
+        args = ['nether']
     else:
         raise ValueError("unknown client: %s" % client)
 
     return subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-@pytest.fixture(scope="module", params=['cpp-ethereum', 'go-ethereum'])
+@pytest.fixture(scope="module", params=['cpp-ethereum', 'go-ethereum', 'node-ethereum'])
 @pytest.mark.timeout(1)
 def eth(request):
     tmpdir = py.path.local(tempfile.mkdtemp())
