@@ -1,7 +1,7 @@
 [![Stories in Ready](https://badge.waffle.io/jorisbontje/ethereum-rpctests.png?label=ready&title=Ready)](https://waffle.io/jorisbontje/ethereum-rpctests)
 # Ethereum RPC Tests
 
-JSONRPC API tests for `cpp-ethereum` and `go-ethereum`.
+JSONRPC API tests for `cpp-ethereum`, `go-ethereum` and `node-ethereum`.
 
 ## Installation
 
